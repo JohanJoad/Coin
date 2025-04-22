@@ -3,8 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coins - Labyrintspel</title>    
-    <base href="http://localhost:3000/">
+    <title>Coins - Labyrintspel</title> 
+
+    <script>
+        if (window.location.hostname === "localhost") {
+            document.write('<base href="http://localhost:3000/">');
+        } else {
+            document.write('<base href="/">');
+        }
+    </script>
+    
+    
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
