@@ -1,24 +1,47 @@
 <!DOCTYPE html>
 <html lang="sv">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coins - Labyrintspel</title> 
+    <title>Coins - Labyrintspel</title>
 
     <script>
-        if (window.location.hostname === "localhost") {
+        if (window.location.protocol === "file:") {
+            document.write('<base href="">'); // Ange rätt lokal sökväg
+        } else if (window.location.hostname === "localhost") {
             document.write('<base href="http://localhost:3000/">');
         } else {
             document.write('<base href="/Coin/">');
         }
     </script>
     
-    
-    
+
+
+
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="game-container">
+
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <select id="campaignSelect" style="flex: 1 1 0%;">
+                <option value="">Level</option>
+            </select>
+
+            <select id="customSelect" style="flex: 1 1 0%;">
+                <option value="">Custom...</option>
+            </select>
+
+            <button id="Clear Scores" style="flex: 1 1 0%;">Clear scores</button>
+
+
+        </div>
+
+
+
+
         <div id="info">
             <span id="level">Nivå: 1</span>
             <span id="moves">Drag: 0</span>
@@ -29,4 +52,5 @@
     <script src="levels.js"></script>
     <script src="game.js"></script>
 </body>
+
 </html>

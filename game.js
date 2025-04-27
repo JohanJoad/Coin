@@ -28,58 +28,49 @@ class Game {
 
         // Setup other event listeners
         this.setupEvents();
-
-
     }
 
     async setupLevelSelectors() {
-        // Skapa container för level-väljare
-        const container = document.createElement('div');
-        container.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px;';
-        const info = document.getElementById('info');
-        info.parentNode.insertBefore(container, info);
 
         // Campaign level selector
-        const campaignSelect = document.createElement('select');
-        campaignSelect.id = 'campaignSelect';
-        campaignSelect.style.flex = '1';
+        const campaignSelect = document.getElementById('campaignSelect');
         this.updateCampaignLevels(campaignSelect);
 
+        const customSelect = document.getElementById('customSelect');
+
         // if (window.location.protocol.startsWith("http")) {
-            // Custom level selector
-            const customSelect = document.createElement('select');
-            customSelect.id = 'customSelect';
-            customSelect.style.flex = '1';
-        // }
+        try {
+            const response = await fetch('/list-levels');
+            if (response.ok) {
+                const data = await response.json();
+                this.customLevels = data.customLevels;
+                this.hasLevelDir = data.hasLevelDir;
 
-        // Lägg till selectors i containern
-        container.appendChild(campaignSelect);
-
-        // Hämta custom levels om de finns
-        // if (window.location.protocol.startsWith("http")) {
-            try {
-                const response = await fetch('/list-levels');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.customLevels = data.customLevels;
-                    this.hasLevelDir = data.hasLevelDir;
-
-                    if (this.hasLevelDir) {
-                        this.updateCustomLevels(customSelect);
-                        container.appendChild(customSelect);
-                    }
+                if (this.hasLevelDir) {
+                    this.updateCustomLevels(customSelect);
                 }
-
-            } catch (error) {
-                console.error('Kunde inte hämta custom levels:', error);
             }
+
+        } catch (error) {
+            console.error('Kunde inte hämta custom levels:', error);
+        }
         // }
 
         // Event listeners för level-väljare
         campaignSelect.addEventListener('change', () => {
             const levelIndex = parseInt(campaignSelect.value);
+            console.log("Kampanjnivå vald:", levelIndex);
             this.loadCampaignLevel(levelIndex);
         });
+
+        document.getElementById('Clear Scores').addEventListener('click', function () {
+            console.log('Knappen Clear har klickats!');
+            localStorage.removeItem('coinsGameState');
+
+        });
+
+
+
 
         if (this.hasLevelDir) {
             customSelect.addEventListener('change', async () => {
@@ -95,11 +86,12 @@ class Game {
 
         select.innerHTML = '';
         // Visa alla nivåer upp till och med den högsta upplåsta nivån
-        for (let i = 0; i <= this.highestUnlockedLevel; i++) {
+        for (let i = 0; i < LEVELS.length; i++) {
             console.log("highestUnlockedLevel:", this.highestUnlockedLevel);
+            console.log("i:", i);
             const option = document.createElement('option');
             option.value = i;
-            option.textContent = `Nivå ${i + 1}`;
+            option.textContent = `Level ${i + 1}`;
             select.appendChild(option);
             console.log(`Lägger till nivå: ${i + 1}`);
 
@@ -138,7 +130,7 @@ class Game {
     }
 
     loadCampaignLevel(levelIndex) {
-        if (levelIndex <= this.highestUnlockedLevel && levelIndex < LEVELS.length) {
+        if (levelIndex <= levelIndex <= LEVELS.length) {
             const level = LEVELS[levelIndex];
             this.currentLevel = levelIndex;
             this.map = level.map;
@@ -146,11 +138,11 @@ class Game {
             this.targets = JSON.parse(JSON.stringify(level.targets));
             this.moves = 0;
             this.isPlayingCustomLevel = false;
-            this.currentCustomLevel = '';
+            this.currentCustomLevel = '';            
             this.resizeCanvas();
             this.updateUI();
             this.draw();
-            this.saveGameState();
+            // this.saveGameState();
         }
     }
 
@@ -386,9 +378,21 @@ class Game {
         document.getElementById('moves').textContent = `Drag: ${this.moves}`;
     }
 
+    drawCoin(coin, x, y) {
+        this.ctx.fillStyle = coin.color;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, this.cellSize * 0.4, 0, Math.PI * 2);
+        this.ctx.fill();
+    
+        // Svart kantlinje
+        this.ctx.strokeStyle = "black";
+        this.ctx.lineWidth = 3;
+        this.ctx.stroke();
+    }
+        
+
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
         // Draw maze
         for (let y = 0; y < this.map.length; y++) {
             for (let x = 0; x < this.map[y].length; x++) {
@@ -403,53 +407,49 @@ class Game {
                 }
             }
         }
+        const borderWidth = 3; // Mindre kanttjocklek
 
-        // Draw targets
         for (const target of this.targets) {
-            // Rita fylld cirkel med högre opacitet
-            this.ctx.fillStyle = target.color + '88';  // Ökad opacitet från 44 till 88
-            this.ctx.beginPath();
-            this.ctx.arc(
-                (target.x + 0.5) * this.cellSize,
-                (target.y + 0.5) * this.cellSize,
-                this.cellSize * 0.5,
-                0,
-                Math.PI * 2
-            );
-            this.ctx.fill();
+            // Fyllningsfärg med transparens
 
-            // Lägg till en tunn kantlinje
+            this.ctx.fillStyle = target.color;
+
+            this.ctx.fillRect(
+                target.x * this.cellSize,
+                target.y * this.cellSize,
+                this.cellSize,
+                this.cellSize
+            );
+
+            // Kantlinje
             this.ctx.strokeStyle = target.color;
-            this.ctx.lineWidth = 6;
-            this.ctx.stroke();
+            this.ctx.lineWidth = borderWidth;
+            this.ctx.strokeRect(
+                target.x * this.cellSize + borderWidth / 2,
+                target.y * this.cellSize + borderWidth / 2,
+                this.cellSize - borderWidth,
+                this.cellSize - borderWidth
+            );
         }
+
 
         // Draw coins
         for (const coin of this.coins) {
             if (coin === this.draggedCoin && coin.dragging) {
-                this.ctx.fillStyle = coin.color;
-                this.ctx.beginPath();
-                this.ctx.arc(
+                this.drawCoin(
+                    coin,
                     coin.dragX - this.canvas.getBoundingClientRect().left,
-                    coin.dragY - this.canvas.getBoundingClientRect().top,
-                    this.cellSize * 0.4,
-                    0,
-                    Math.PI * 2
+                    coin.dragY - this.canvas.getBoundingClientRect().top
                 );
-                this.ctx.fill();
             } else {
-                this.ctx.fillStyle = coin.color;
-                this.ctx.beginPath();
-                this.ctx.arc(
+                this.drawCoin(
+                    coin,
                     (coin.x + 0.5) * this.cellSize,
-                    (coin.y + 0.5) * this.cellSize,
-                    this.cellSize * 0.4,
-                    0,
-                    Math.PI * 2
+                    (coin.y + 0.5) * this.cellSize
                 );
-                this.ctx.fill();
             }
         }
+        
     }
 
     gameLoop() {

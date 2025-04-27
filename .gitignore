@@ -5,3 +5,4 @@ editor.js
 package-lock.json
 package.json
 server.js
+solver.js
