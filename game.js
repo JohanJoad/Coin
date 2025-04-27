@@ -169,7 +169,7 @@ class Game {
     }
 
     resizeCanvas() {
-        const maxSize = Math.min(window.innerWidth - 40, 800);
+        const maxSize = Math.min(window.innerWidth - 40, window.innerHeight-60   ,800);
         this.canvas.width = maxSize * 1;
         this.canvas.height = maxSize * 0.75;
 
@@ -379,7 +379,8 @@ class Game {
     }
 
     drawCoin(coin, x, y) {
-        this.ctx.fillStyle = coin.color;
+        
+        this.ctx.fillStyle = coin.color 
         this.ctx.beginPath();
         this.ctx.arc(x, y, this.cellSize * 0.4, 0, Math.PI * 2);
         this.ctx.fill();
@@ -388,6 +389,7 @@ class Game {
         this.ctx.strokeStyle = "black";
         this.ctx.lineWidth = 3;
         this.ctx.stroke();
+        
     }
         
 
@@ -412,6 +414,7 @@ class Game {
         for (const target of this.targets) {
             // Fyllningsfärg med transparens
 
+            this.ctx.globalAlpha = .65;
             this.ctx.fillStyle = target.color;
 
             this.ctx.fillRect(
@@ -420,6 +423,7 @@ class Game {
                 this.cellSize,
                 this.cellSize
             );
+            this.ctx.globalAlpha = 1; // Återställ alpha till 1
 
             // Kantlinje
             this.ctx.strokeStyle = target.color;
